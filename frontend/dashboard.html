@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Room Monitor Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* Reset and font styling */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #ECECEC;
+      color: #2C3E50;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .dark-mode {
+      background-color: #181818;
+      color: #5352FF; /* Neon Blue */
+    }
+
+    /* Navbar styling */
+    .navbar {
+      width: 100%;
+      background-color: #2C3E50;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      position: fixed;
+      top: 0;
+      z-index: 1000;
+    }
+    .navbar.dark-mode {
+      background-color: #1F1F1F;
+    }
+
+    .navbar h1 {
+      color: #ECF0F1;
+      font-family: 'Roboto', sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+      margin: 0;
+    }
+
+    .navbar ul {
+      list-style-type: none;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .navbar ul li a {
+      color: #ECF0F1;
+      text-decoration: none;
+      font-size: 16px;
+      padding: 8px 12px;
+      border-radius: 5px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .navbar ul li a:hover {
+      background-color: #1ABC9C;
+      color: #FFFFFF;
+    }
+
+    .dark-mode .navbar h1,
+    .dark-mode .navbar ul li a {
+      color: #5352FF; /* Neon Blue for Navbar Text */
+    }
+
+    /* Toggle Switch Styling */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      color: #ECF0F1;
+      font-size: 16px;
+      gap: 10px;
+      transition: color 0.3s;
+    }
+
+    .dark-mode .toggle-container {
+      color: #5352FF; /* Neon Blue for Dark Mode Label */
+    }
+
+    .switch {
+      position: relative;
+      width: 40px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #1ABC9C;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Dashboard container */
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+      padding: 100px 20px 20px;
+      margin: auto;
+    }
+
+    /* Main monitoring area */
+    .monitor-section {
+      background-color: #F5F5F5;
+      border-radius: 12px;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .monitor-section.dark-mode {
+      background-color: #181818;
+    }
+
+    .monitor-title {
+      font-family: 'Roboto', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      margin-bottom: 15px;
+      color: #2C3E50;
+      transition: color 0.3s;
+    }
+    .monitor-title.dark-mode {
+      color: #5352FF; /* Neon Blue for Monitor Title */
+    }
+
+    .heatmap-video {
+      width: 100%;
+      height: 300px;
+      background-color: #000;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      transition: border 0.3s;
+    }
+    .heatmap-video.dark-mode {
+      border: 2px solid #555;
+    }
+
+    /* Histogram section */
+    .histogram-section {
+      font-size: 16px;
+      color: #333;
+      transition: color 0.3s;
+    }
+    .histogram-section.dark-mode {
+      color: #5352FF; /* Neon Blue for Histogram Text */
+    }
+
+    .histogram-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #2C3E50;
+      transition: color 0.3s;
+    }
+    .dark-mode .histogram-title {
+      color: #5352FF; /* Neon Blue for Histogram Title */
+    }
+
+    .histogram-description {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #777;
+      transition: color 0.3s;
+    }
+    .dark-mode .histogram-description {
+      color: #5352FF; /* Neon Blue for Histogram Description */
+    }
+
+    .histogram-chart {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      height: 100px;
+      background-color: #E8E8E8;
+      border-radius: 8px;
+      padding: 10px;
+      transition: background-color 0.3s;
+    }
+    .histogram-chart.dark-mode {
+      background-color: #333;
+    }
+
+    .bar {
+      width: 15%;
+      background-color: #1ABC9C;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: 14px;
+      color: #FFFFFF; /* Keep bar text white in both modes */
+      transition: background-color 0.3s;
+    }
+
+    /* Sidebar styling */
+    .sidebar {
+      background-color: #2C3E50;
+      color: #ECECEC;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-radius: 12px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .sidebar.dark-mode {
+      background-color: #1F1F1F;
+      color: #5352FF; /* Neon Blue for Sidebar Text */
+    }
+
+    .sidebar-title {
+      font-family: 'Roboto', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+
+    .sidebar-info {
+      background-color: #3A3A3A;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+    .sidebar-info.dark-mode {
+      background-color: #333;
+      color: #5352FF; /* Neon Blue for Sidebar Info */
+    }
+
+    .info-title {
+      font-size: 14px;
+      color: #BBB;
+    }
+    .info-value {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .info-status {
+      font-size: 16px;
+      color: #1ABC9C;
+    }
+
+    /* Footer styling */
+    .footer {
+      width: 100%;
+      background-color: #2C3E50;
+      color: #ECF0F1;
+      padding: 20px;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .footer.dark-mode {
+      background-color: #1F1F1F;
+      color: #5352FF; /* Neon Blue for Footer */
+    }
+
+    /* Responsive design adjustments */
+    @media (max-width: 768px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+      .heatmap-video {
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="navbar" id="navbar">
+    <h1>SenseSang</h1>
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Analytics</a></li>
+      <li>
+        <div class="toggle-container">
+          <span id="darkModeLabel">Dark Mode</span>
+          <label class="switch">
+            <input type="checkbox" id="darkModeToggle" onclick="toggleDarkMode()">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Dashboard Container -->
+  <div class="dashboard-container">
+    <!-- Main Monitoring Section -->
+    <div class="monitor-section" id="monitorSection">
+      <h2 class="monitor-title" id="monitorTitle">Real-Time Outdoor Room Monitor</h2>
+      <div class="heatmap-video" id="heatmapVideo">
+        <!-- ESP32-CAM video stream -->
+        <video id="esp32cam" autoplay muted controls style="width: 100%; height: 100%;">
+          <source src="http://192.168.100.158:81/stream" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+      <div class="histogram-section" id="histogramSection">
+        <div class="histogram-title">Histogram</div>
+        <div class="histogram-description">Updating every hour</div>
+        <div class="histogram-chart" id="histogramChart">
+          <div class="bar" style="height: 50%;">50</div>
+          <div class="bar" style="height: 80%;">80</div>
+          <div class="bar" style="height: 60%;">60</div>
+          <div class="bar" style="height: 40%;">40</div>
+          <div class="bar" style="height: 70%;">70</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Room Overview -->
+    <div class="sidebar" id="sidebar">
+      <h2 class="sidebar-title">Room Overview</h2>
+      <div class="sidebar-info" id="sidebarInfo">
+        <div class="info-title">Total People</div>
+        <div class="info-value">0</div>
+        <div class="info-title">Status</div>
+        <div class="info-status">Normal</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer" id="footer">
+    &copy; 2024 Professional Dashboard. All rights reserved.
+  </div>
+
+  <script>
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      document.getElementById("navbar").classList.toggle('dark-mode');
+      document.getElementById("footer").classList.toggle('dark-mode');
+      document.getElementById("monitorSection").classList.toggle('dark-mode');
+      document.getElementById("monitorTitle").classList.toggle('dark-mode');
+      document.getElementById("heatmapVideo").classList.toggle('dark-mode');
+      document.getElementById("histogramSection").classList.toggle('dark-mode');
+      document.getElementById("histogramChart").classList.toggle('dark-mode');
+      document.querySelectorAll(".bar").forEach(bar => bar.classList.toggle('dark-mode'));
+      document.getElementById("sidebar").classList.toggle('dark-mode');
+      document.getElementById("sidebarInfo").classList.toggle('dark-mode');
+      document.getElementById("darkModeLabel").classList.toggle('dark-mode'); // Label text changes in dark mode
+    }
+    async function fetchRoomOverview() {
+      try {
+        const response = await fetch('http://localhost:3000/api/room-overview');
+        const data = await response.json();
+        
+        // Update totalPeople in the frontend
+        document.querySelector('.info-value').innerText = data.totalPeople;
+        
+        // Get the status element
+        const statusElement = document.querySelector('.info-status');
+        
+        // Set status to "Crowded" if totalPeople is more than 30, and change color to red
+        if (data.totalPeople >= 20) {
+          statusElement.innerText = "Crowded";
+          statusElement.style.color = "#FF4C4C";
+        } else {
+          statusElement.innerText = data.status;
+          statusElement.style.color = "#1ABC9C"; // Default color (green)
+        }
+      } catch (error) {
+        console.error('Error fetching room overview data:', error);
+      }
+    }
+    async function fetchCurrentPeople() {
+    try {
+      const response = await fetch('http://localhost:3000/api/current-people'); // Endpoint backend untuk currentPeople
+      const data = await response.json();
+
+      // Update Total People di frontend
+      document.querySelector('.info-value').innerText = data.currentPeople;
+
+      // Update status berdasarkan jumlah orang
+      const statusElement = document.querySelector('.info-status');
+      if (data.currentPeople >= 20) {
+        statusElement.innerText = "Crowded";
+        statusElement.style.color = "#FF4C4C"; // Merah jika Crowded
+      } else {
+        statusElement.innerText = "Normal";
+        statusElement.style.color = "#1ABC9C"; // Hijau jika Normal
+      }
+    } catch (error) {
+      console.error('Error fetching currentPeople data:', error);
+    }
+  }
+
+  // Panggil fetchCurrentPeople setiap 5 detik untuk update real-time
+  setInterval(fetchCurrentPeople, 5000);
+
+  // Panggilan awal saat halaman selesai dimuat
+  document.addEventListener('DOMContentLoaded', fetchCurrentPeople);
+
+  // Panggil fetchRoomOverview setiap 5 detik untuk update real-time
+  setInterval(fetchRoomOverview, 5000);
+
+  // Panggilan awal saat halaman selesai dimuat
+  document.addEventListener('DOMContentLoaded', fetchRoomOverview);
+  </script>
+
+</body>
+</html>
